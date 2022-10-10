@@ -10,6 +10,9 @@ import { TruckFactorTranslater } from "./truckFactor"
 import { GradLegendData } from "~/components/legend/GradiantLegend"
 import { SegmentLegendData } from "~/components/legend/SegmentLegend"
 import { PointInfo, PointLegendData } from "~/components/legend/PointLegend"
+import { getRandomColor } from "~/metrics/metricUtils"
+import { setColor } from "./significanceTf"
+
 
 export type MetricsData = [
   Record<AuthorshipType, Map<MetricType, MetricCache>>,
@@ -30,6 +33,7 @@ export const Metric = {
   SINGLE_AUTHOR: "Single author",
   TOP_CONTRIBUTOR: "Top contributor",
   TRUCK_FACTOR: "Truck factor",
+  SIGNIFICANCE_TRUCK_FACTOR: "Significance truck factor",
 }
 
 export type MetricType = keyof typeof Metric
@@ -63,6 +67,8 @@ export function getMetricDescription(metric: MetricType, authorshipType: Authors
         : "Which person has made the most line-changes to a file, in the newest version?"
     case "TRUCK_FACTOR":
         return "How many have contributed to a file?"
+    case "SIGNIFICANCE_TRUCK_FACTOR":
+      return "Significance"
     default:
       throw new Error("Uknown metric type: " + metric)
   }
@@ -78,6 +84,8 @@ export function getMetricLegendType(metric: MetricType) : LegendType {
       return "GRADIENT"
     case "LAST_CHANGED":
     case "TRUCK_FACTOR":
+      return "SEGMENTS"
+    case "SIGNIFICANCE_TRUCK_FACTOR":
       return "SEGMENTS"
     default:
       throw new Error("Uknown metric type: " + metric)
@@ -129,6 +137,7 @@ export function getMetricCalcs(
   const commit = data.commit
 
   const [mincom, maxcom] = FindMinMaxCommit(commit.tree)
+  const colorMap = new Map<number, string>()
 
   const commitmapper = new CommitAmountTranslater(mincom, maxcom)
   const truckmapper = new TruckFactorTranslater(data.authorsUnion.length)
@@ -204,8 +213,42 @@ export function getMetricCalcs(
         truckmapper.setColor(blob, cache)
       },
     ],
+    [
+      "SIGNIFICANCE_TRUCK_FACTOR",
+      (blob: HydratedGitBlobObject, cache: MetricCache) => {
+        // let count = Object.keys(blob.authors).length
+        // if(count == undefined){
+        //   count = 0
+        // }
+        // if (count > 255){
+        //   count = 255
+        // }
+
+
+        // // console.log("Hellowwww")
+
+        // if (!colorMap.has(count)){
+        //   colorMap.set(count, getRandomColor())
+        // }
+
+        // let color = colorMap.get(count)
+
+        if (!cache.legend) {
+          cache.legend = [
+            Math.floor(Math.log2(data.authorsUnion.length)) + 1,
+            (n) => `${Math.pow(2,n)}`,
+            (n) => `hsl(0,75%,${50 + (n*(40 / (Math.floor(Math.log2(data.authorsUnion.length)) + 1)))}%)`,
+            (blob) => Math.floor(Math.log2(Object.entries(blob.unionedAuthors?.HISTORICAL ?? []).length))
+          ]
+        }
+
+        setColor(blob, cache)
+      },
+    ],
   ]
 }
+
+
 
 export function setupMetricsCache(
   tree: HydratedGitTreeObject,

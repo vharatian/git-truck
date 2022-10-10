@@ -3,6 +3,7 @@ import { analyzeRenamedFile, lookupFileInTree } from "./util.server"
 import { GitCaller } from "./git-caller.server"
 import { getCoAuthors } from "./coauthors.server"
 import { log } from "./log.server"
+import { getSignificanceInfo } from "./significanceInfoProvider"
 
 const renamedFiles = new Map<string, string>()
 
@@ -13,6 +14,8 @@ export async function hydrateData(commit: GitCommitObject): Promise<[HydratedGit
   initially_mut(data)
 
   const gitLogResult = await GitCaller.getInstance().gitLog()
+
+  const significanceResult = await getSignificanceInfo()
 
   const gitLogRegex =
     /"author\s+<\|(?<author>.+?)\|>\s+date\s+<\|(?<date>\d+)\|>\s+body\s+<\|(?<body>(?:\s|.)*?)\|>"\s+(?<contributions>(?:\s*.+\s+\|.*)+).*/gm
@@ -26,6 +29,7 @@ export async function hydrateData(commit: GitCommitObject): Promise<[HydratedGit
     const body = groups.body
     const contributionsString = groups.contributions
     const coauthors = body ? getCoAuthors(body) : []
+    
 
     log.debug(`Checking commit from ${time}`)
 
@@ -54,6 +58,12 @@ export async function hydrateData(commit: GitCommitObject): Promise<[HydratedGit
         continue
       }
 
+      if(significanceResult.has(filePath)){
+        blob.significanceInfo = significanceResult.get(filePath)
+      }else{
+        blob.significanceInfo = undefined
+      }
+
       blob.noCommits = (blob.noCommits ?? 0) + 1
       if (!blob.lastChangeEpoch) blob.lastChangeEpoch = time
 
@@ -72,6 +82,8 @@ export async function hydrateData(commit: GitCommitObject): Promise<[HydratedGit
       for (const coauthor of coauthors) {
         blob.authors[coauthor.name] = (blob.authors[coauthor.name] ?? 0) + contribs
       }
+
+      
     }
   }
 

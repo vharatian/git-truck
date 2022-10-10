@@ -43,6 +43,7 @@
     "distinct-colors": "^3.0.0",
     "dotenv": "^16.0.0",
     "express": "^4.17.3",
+    "fast-csv": "^4.3.6",
     "fs-extra": "^10.0.1",
     "get-port": "^6.1.2",
     "github-colors": "git+https://github.com/ozh/github-colors.git",

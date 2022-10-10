@@ -33,6 +33,19 @@ export function getColorFromExtension(extension: string) {
   return colorResult.color
 }
 
+export function getRandomColor(): string{
+  let index = getRandomInt(0, lowercasedColors.size)
+  let key = [...lowercasedColors.keys()][index]
+  let color = lowercasedColors.get(key)
+  return color?.color!
+}
+
+function getRandomInt(min: number, max: number): number {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 export class SpectrumTranslater {
     readonly scale: number
     readonly offset: number

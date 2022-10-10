@@ -1,5 +1,6 @@
 import { AuthorshipType } from "~/metrics/metrics"
 import { ANALYZER_CACHE_MISS_REASONS } from "./git-caller.server"
+import { SignificanceInfo } from "./significanceInfoProvider"
 
 export interface Repository {
   path: string
@@ -76,6 +77,7 @@ export interface HydratedGitBlobObject extends GitBlobObject {
   unionedAuthors?: Record<AuthorshipType, Record<string, number>>
   dominantAuthor?: Map<AuthorshipType, [string, number]>
   isSearchResult?: boolean
+  significanceInfo?: SignificanceInfo
 }
 
 export interface GitTreeObject extends AbstractGitObject {
